@@ -24,10 +24,16 @@ _G.letterSize = {}
 letterSize.x = 2
 letterSize.y = 2
 
+_G.bagLocation = {}
+
+bagLocation.x = (17*40)
+bagLocation.y = 40
+
+
 
 --Tile constructor, location can be "hand", "word", or "board"
 --if hand/word, index has one value; if board, index has two values
-function Tile(letter, special, location, index)
+function Tile(letter, special, location, index, width, height)
     return {
         letter = letter,
         points = Values[letter],
@@ -38,10 +44,11 @@ function Tile(letter, special, location, index)
             hand = (location == "hand"),
             board = (location == "board"),
             word = (location == "word"),
+            bag = (location == "bag")
         },
         index = index,
-        width = TileWidth,
-        height = TileHeight,
+        width = width or TileWidth,
+        height = height or TileHeight,
         selected = false,
 
 
@@ -55,9 +62,8 @@ function Tile(letter, special, location, index)
                             Selection = self
                         end
                     else
-                        local temp = self.letter
-                        self.letter = Selection.letter
-                        Selection.letter = temp
+                        print(Selection.letter)
+                        self:swap(Selection)
                         Selection.selected = false
                         Selection = nil
                     end
@@ -70,33 +76,33 @@ function Tile(letter, special, location, index)
                 self.y = cursor_y
             else
                 if self.location["hand"] then
-                    self.x = handLocation.x + (self.index[1] - 1)*TileWidth
+                    self.x = handLocation.x + (self.index[1] - 1)*self.width
                     self.y = handLocation.y
                 elseif self.location["board"] then
-                    self.x = boardLocation.x + (self.index[1] - 1)*TileWidth
-                    self.y = boardLocation.y + (self.index[2] - 1)*TileWidth
+                    self.x = boardLocation.x + (self.index[1] - 1)*self.width
+                    self.y = boardLocation.y + (self.index[2] - 1)*self.width
                 elseif self.location["word"] then
-                    self.x = wordLocation.x + (self.index[1] - 1)*TileWidth
+                    self.x = wordLocation.x + (self.index[1] - 1)*self.width
                     self.y = wordLocation.y
+                elseif self.location["bag"] then
+                    self.x = bagLocation.x + (self.index[1] - 1)*self.width
+                    self.y = bagLocation.y + (self.index[2] - 1)*self.height
                 end
             end
         end,
         draw = function (self)
-            if self.location["hand"] then
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.rectangle("line", (self.x), self.y, TileWidth, TileHeight)
-                love.graphics.print(self.letter, self.x + 10, self.y + 4, 0, letterSize.x, letterSize.y)
-                love.graphics.print(self.points, self.x + 30, self.y + 25, 0, 1, 1)
-            elseif self.location["word"] then
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.rectangle("line", (wordLocation.x + (index[1] - 1)*TileWidth), wordLocation.y, TileWidth, TileHeight)
-                love.graphics.print(self.letter, wordLocation.x + (index[1] - 1)*TileWidth + 10, wordLocation.y + 4, 0, letterSize.x, letterSize.y)
-                love.graphics.print(self.points, wordLocation.x + (index[1] - 1)*TileWidth + 30, wordLocation.y + 25, 0, 1, 1)
-            elseif self.location["board"] then
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.rectangle("line", (boardLocation.x + (index[1] - 1)*TileWidth), boardLocation.y + (index[2] - 1)*TileHeight, TileWidth, TileHeight)
-                love.graphics.print(self.letter, boardLocation.x + (index[1] - 1)*TileWidth + 10, boardLocation.y + 4 + (index[2] - 1)*TileHeight, 0, letterSize.x, letterSize.y)
-                love.graphics.print(self.points, boardLocation.x + (index[1] - 1)*TileWidth + 30, boardLocation.y + 25 + (index[2] - 1)*TileHeight, 0, 1, 1)
+            if self.letter == "e" then
+                self.letter = " "
+                self.points = " "
+            end
+            local ratio = self.width/TileWidth
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.rectangle("line", (self.x), self.y, self.width, self.height)
+            love.graphics.print(self.letter, self.x + 10*ratio, self.y + 4*ratio, 0, letterSize.x*ratio, letterSize.y*ratio)
+            love.graphics.print(self.points, self.x + 30*ratio, self.y + 25*ratio, 0, 1*ratio, 1*ratio)
+            if self.letter == " " then
+                self.letter = "e"
+                self.points = 0
             end
         end,
         setState = function(self, location, index)
@@ -106,6 +112,22 @@ function Tile(letter, special, location, index)
                 word = (location == "word"),
             }
             self.index = index
+        end,
+        --Swaps members of two tiles without creating any other instance
+        swap = function(self, other)
+            print(other)
+            local templetter = self.letter
+            local tempspecial = self.special
+            local temppoints = self.points
+
+            self.letter = other.letter
+            self.special = other.special
+            self.points = other.points
+
+            other.letter = templetter
+            other.special = tempspecial
+            other.points = temppoints
+            print("Finished swap")
         end,
     }
    

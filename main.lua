@@ -22,7 +22,8 @@ local player = {
 local tiles = {
     hand = {},
     board = {},
-    word = {}
+    word = {},
+    bag = {}
 }
 --table stores all buttons, separated into the game state
 local buttons = {
@@ -34,20 +35,8 @@ function love.load()
     _G.TileWidth = 40
     _G.TileHeight = 40
     love.graphics.setBackgroundColor(1, 1, 1)
-    _G.Board = {}
-    _G.Hand = {}
-    _G.Word = {}
-    _G.Values = {A = 1, B = 3, C = 3, D = 2, E = 1, F = 4, G = 2, H = 4, I = 1, J = 8, K = 5, L = 1, M = 3, N = 1, O = 1, P = 3, Q = 10, R = 1, S = 1, T = 1, U = 1, V = 4, W = 4, X = 8, Y = 4, Z = 10, b = 0, e = -1}
+    _G.Values = {A = 1, B = 3, C = 3, D = 2, E = 1, F = 4, G = 2, H = 4, I = 1, J = 8, K = 5, L = 1, M = 3, N = 1, O = 1, P = 3, Q = 10, R = 1, S = 1, T = 1, U = 1, V = 4, W = 4, X = 8, Y = 4, Z = 10, b = 0, e = 0}
     _G.Bag = {A = 9, B = 2, C = 2, D = 4, E = 12, F = 2, G = 3, H = 2, I = 9, J = 1, K = 1, L = 4, M = 2, N = 6, O = 8, P = 2, Q = 1, R = 6, S = 4, T = 6, U = 4, V = 2, W = 2, X = 1, Y = 2, Z = 1, b = 2}
-    _G.handLocation = {}
-    _G.MouseSelection = {}
-    MouseSelection.tile = nil
-    MouseSelection.index = -1
-    handLocation.x = 1000
-    handLocation.y = 400
-    _G.letterSize = {}
-    letterSize.x = 2
-    letterSize.y = 2
     _G.Selection = nil
     for i = 1, 7 do
         tiles["hand"][i] = Tile("e", "None", "hand", {i})
@@ -60,7 +49,10 @@ function love.load()
             tiles["board"][i + 15*(j-1)] = Tile("e", "None", "board", {i, j})
         end
     end
-    buttons.running_state[1] = Button("Draw", fillRack, nil, 1000, 100, 50, 50, 10, 10)
+    _G.WordPoints = 0
+
+    buttons.running_state[1] = Button("Draw", fillRack, nil, 1300, 300, 50, 50, 10, 10)
+    updateBag()
 end
 
 function love.update(dt)
@@ -75,6 +67,7 @@ function love.update(dt)
             tiles[key][i]:update(player.x, player.y)
         end
     end
+    WordPoints = score(tiles["word"])
 end
 
 function love.draw()
@@ -88,6 +81,7 @@ function love.draw()
             buttons[key][i]:draw()
         end
     end
+    love.graphics.print("Points: " .. WordPoints, 1000, 250, 0, 2, 2)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -140,4 +134,32 @@ function _G.fillRack()
             tiles.hand[key] = Tile(drawTile(), tiles.hand[key].special, "hand", tiles.hand[key].index)
         end
     end
+    updateBag()
+end
+
+function _G.updateBag()
+    local nCols = 20
+    local tileindexX = 1
+    local tileindexY = 1
+    for i, v in ipairs(tiles["bag"]) do tiles["bag"][i] = nil end
+    for i, v in pairs(Bag) do
+        for j=1,v do
+            tiles["bag"][tileindexX + (tileindexY - 1)*nCols] = Tile(i, "None", "bag", {tileindexX, tileindexY}, 30, 30)
+            if tileindexX % nCols == 0 then
+                tileindexX = 0
+                tileindexY = tileindexY + 1
+            end
+            tileindexX = tileindexX + 1
+        end
+    end
+end
+
+function _G.score(wordtiles)
+    local total = 0
+    for key, value in pairs(wordtiles) do
+        if value ~= nil then
+            total = total + value.points
+        end
+    end
+    return total
 end
