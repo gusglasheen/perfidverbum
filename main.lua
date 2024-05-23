@@ -1,8 +1,12 @@
 _G.love = require("love")
 _G.Tile = require("Tile")
+_G.csv = require("csv")
 _G.Button = require("Button")
+_G.BinarySearch = require("BinarySearch")
 
 math.randomseed(os.time())
+
+
 --game table to store state--
 local game = {
     state = {
@@ -32,6 +36,16 @@ local buttons = {
     ended_state = {}
 }
 function love.load()
+    _G.ValidWords = {}
+    local f = csv.open("data/dictionary.csv")
+    if f ~= nil then
+        local i = 1
+        for fields in f:lines() do
+            ValidWords[i] = fields[1]
+            i = i + 1
+        end
+    end
+
     _G.TileWidth = 40
     _G.TileHeight = 40
     love.graphics.setBackgroundColor(1, 1, 1)
@@ -50,8 +64,10 @@ function love.load()
         end
     end
     _G.WordPoints = 0
+    _G.WordWord = ""
 
-    buttons.running_state[1] = Button("Draw", fillRack, nil, 1300, 300, 50, 50, 10, 10)
+    buttons.running_state[1] = Button("Draw", fillRack, nil, 1300, 400, 50, 50, 10, 10)
+    buttons.running_state[2] = Button("Reset", resetWord, nil, 1300, 300, 50, 50, 10, 10)
     updateBag()
 end
 
@@ -68,12 +84,13 @@ function love.update(dt)
         end
     end
     WordPoints = score(tiles["word"])
+    WordWord = WordTilesToString(tiles["word"])
 end
 
 function love.draw()
     for key, value in pairs(tiles) do
         for i=1,#value do
-            tiles[key][i]:draw()
+            tiles[key][i]:draw(player.x, player.y)
         end
     end
     for key, value in pairs(buttons) do
@@ -81,7 +98,12 @@ function love.draw()
             buttons[key][i]:draw()
         end
     end
-    love.graphics.print("Points: " .. WordPoints, 1000, 250, 0, 2, 2)
+    if CheckValidWord(WordWord) ~= nil then
+        love.graphics.print("Word: " .. WordWord .. ", Points: " .. WordPoints, 1000, 250, 0, 2, 2)
+    else
+        love.graphics.print("Invalid Word", 1000, 250, 0, 2, 2)
+    end
+    
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -137,6 +159,12 @@ function _G.fillRack()
     updateBag()
 end
 
+function _G.resetWord()
+    for index, key in pairs(tiles.word) do
+        tiles.word[index] = Tile("e", "None", "word", {index})
+    end
+end
+
 function _G.updateBag()
     local nCols = 20
     local tileindexX = 1
@@ -162,4 +190,18 @@ function _G.score(wordtiles)
         end
     end
     return total
+end
+
+function _G.CheckValidWord(word)
+    return BinarySearch:Search(ValidWords, word:lower())
+end
+
+function _G.WordTilesToString(wordtiles)
+    local word = ""
+    for key, value in pairs(wordtiles) do
+        if value.letter ~= "e" then
+            word = word .. value.letter
+        end
+    end
+    return word
 end

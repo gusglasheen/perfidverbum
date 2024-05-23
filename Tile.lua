@@ -90,13 +90,18 @@ function Tile(letter, special, location, index, width, height)
                 end
             end
         end,
-        draw = function (self)
+        draw = function (self, mouse_x, mouse_y)
             if self.letter == "e" then
                 self.letter = " "
                 self.points = " "
             end
             local ratio = self.width/TileWidth
-            love.graphics.setColor(0, 0, 0)
+            if CheckCollision(self.x, self.y, self.width, self.height, mouse_x, mouse_y, 0, 0) then
+                love.graphics.setColor(1, 0, 1)
+            else
+                love.graphics.setColor(0, 0, 0)
+            end
+            
             love.graphics.rectangle("line", (self.x), self.y, self.width, self.height)
             love.graphics.print(self.letter, self.x + 10*ratio, self.y + 4*ratio, 0, letterSize.x*ratio, letterSize.y*ratio)
             love.graphics.print(self.points, self.x + 30*ratio, self.y + 25*ratio, 0, 1*ratio, 1*ratio)
@@ -115,7 +120,6 @@ function Tile(letter, special, location, index, width, height)
         end,
         --Swaps members of two tiles without creating any other instance
         swap = function(self, other)
-            print(other)
             local templetter = self.letter
             local tempspecial = self.special
             local temppoints = self.points
